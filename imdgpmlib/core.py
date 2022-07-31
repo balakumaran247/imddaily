@@ -24,3 +24,10 @@ class IMDGPM:
 
     def download_grd(self):
         pass
+
+class MultiDateData(IMDGPM):
+    """get the start date and end date as datetime and path
+    loop through the dates and call download_grd
+    and assign download_failed
+    also check if file aready exist and assign skipped"""
+    pass

@@ -1,3 +1,4 @@
+from typing import List
 from core import IMD
 from datetime import datetime
 import os
@@ -14,13 +15,18 @@ class get_data:
             datetime.strptime(end_date, "%Y-%m-%d"),
         )
         self.download_path = self.__imd_obj._check_path(path)
-        self.skipped_download = []
+        self.skipped_download = self.__download()
         self.failed_conversion = []
 
-    def __download(self):
+    def __download(self) -> List:
         # check dates in IMD Availability
         # start date == or > end date
-        pass
+        downloads = map(
+            self.__imd_obj._download_grd,
+            self.__imd_obj._dtrgen(self.start_date, self.end_date),
+            (self.download_path for _ in range((self.end_date-self.start_date).days+1))
+        )
+        return list(filter(lambda x : x, downloads))
 
 
 # def get_data(start_date: str, end_date: str, path):

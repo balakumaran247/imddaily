@@ -1,6 +1,7 @@
 import requests, os
 from datetime import datetime
-from typing import Optional
+from datetime import timedelta as td
+from typing import Optional, Iterator
 
 
 class IMD:
@@ -27,9 +28,9 @@ class IMD:
         self.__imdurl = IMD.__IMDURL[self.var_type]
         self.__pfx, self.__dtfmt, self.__opfx = IMD.__IMDFMT[self.var_type]
 
-    def _download_grd(self, dt: datetime, path: str) -> Optional[str]:
-        url = f"{self.__imdurl}{self.__pfx}{dt.strftime(self.__dtfmt)}.grd"
-        filename = f"{self.__opfx}{dt.strftime('%Y%m%d')}.grd"
+    def _download_grd(self, date: datetime, path: str) -> Optional[str]:
+        url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
+        filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.grd"
         out_file = os.path.join(path, filename)
         if os.path.exists(out_file):
             return filename
@@ -63,6 +64,8 @@ class IMD:
                 f'Data available after {self.__first_date.strftime("%Y-%m-%d")}')
         return start_date, end_date
 
+    def _dtrgen(self, start: datetime, end: datetime) -> Iterator[datetime]:
+        return ((start+td(days=x)) for x in range((end-start).days+1))
 
 # class MultiDateData(IMD):
 #     """get the start date and end date as datetime and path

@@ -1,7 +1,7 @@
 import requests, os
 from datetime import datetime
 from datetime import timedelta as td
-from typing import Optional, Iterator
+from typing import Optional, Iterator, Tuple
 
 
 class IMD:
@@ -23,10 +23,10 @@ class IMD:
         "tminone": ("min1_", "%d%m%Y", "tminone_"),
     }
 
-    def __init__(self, var_type: str) -> None:
-        self.var_type = var_type
-        self.__imdurl = IMD.__IMDURL[self.var_type]
-        self.__pfx, self.__dtfmt, self.__opfx = IMD.__IMDFMT[self.var_type]
+    def __init__(self, param: str) -> None:
+        self.param = param
+        self.__imdurl = IMD.__IMDURL[self.param]
+        self.__pfx, self.__dtfmt, self.__opfx = IMD.__IMDFMT[self.param]
 
     def _download_grd(self, date: datetime, path: str) -> Optional[str]:
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
@@ -47,7 +47,7 @@ class IMD:
             raise OSError(f"{check_path} does not exist.")
         return check_path
 
-    def _check_dates(self, start_date: datetime, end_date: datetime) -> datetime:
+    def _check_dates(self, start_date: str, end_date: str) -> Tuple[datetime]:
         self.__imd_first_date = {
             "raingpm": datetime.strptime('20151001', '%Y%m%d'),
             "tmax": datetime.strptime('20150601','%Y%m%d'),
@@ -56,7 +56,12 @@ class IMD:
             "tmaxone": datetime.strptime('20190101','%Y%m%d'),
             "tminone": datetime.strptime('20190101','%Y%m%d'),
         }
-        self.__first_date = self.__imd_first_date[self.var_type]
+        self.__first_date = self.__imd_first_date[self.param]
+        if not start_date:
+            raise ValueError('Start Date is required.')
+        end_date = (end_date, start_date)[end_date is None]
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
         if start_date > end_date:
             start_date, end_date = end_date, start_date
         if self.__first_date > start_date:
@@ -66,10 +71,3 @@ class IMD:
 
     def _dtrgen(self, start: datetime, end: datetime) -> Iterator[datetime]:
         return ((start+td(days=x)) for x in range((end-start).days+1))
-
-# class MultiDateData(IMD):
-#     """get the start date and end date as datetime and path
-#     loop through the dates and call download_grd
-#     and assign download_failed
-#     also check if file aready exist and assign skipped"""
-#     pass

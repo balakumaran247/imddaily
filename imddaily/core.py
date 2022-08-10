@@ -1,4 +1,5 @@
 import requests, os
+from tqdm import tqdm
 from datetime import datetime
 from datetime import timedelta as td
 from typing import Optional, Iterator, Tuple
@@ -28,13 +29,15 @@ class IMD:
         self.__imdurl = IMD.__IMDURL[self.param]
         self.__pfx, self.__dtfmt, self.__opfx = IMD.__IMDFMT[self.param]
 
-    def _download_grd(self, date: datetime, path: str) -> Optional[str]:
+    def _download_grd(self, date: datetime, path: str, pbar: Optional[tqdm] = None) -> Optional[str]:
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
         filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.grd"
         out_file = os.path.join(path, filename)
         if os.path.exists(out_file):
+            if pbar: pbar.update(1)
             return filename
         r = requests.get(url, allow_redirects=True)
+        if pbar: pbar.update(1)
         if r.status_code != 200:
             return filename
         with open(out_file, "wb") as f:

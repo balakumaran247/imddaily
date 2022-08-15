@@ -1,7 +1,7 @@
 from typing import List
 from core import IMD
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
 
 class get_data:
@@ -39,5 +39,22 @@ class get_data:
                     downloads = [self.__imd._download_grd(dt, self.download_path, pbar) for dt in date_range]
         return list(filter(lambda x : x, downloads))
 
+    def to_tif(self, path: str):
+        date_range = self.__imd._dtrgen(self.start_date, self.end_date)
+        for date in date_range:
+            data = self.__imd._get_array(date, self.download_path)
+            print(type(data))
+            print(data.shape)
+
+    def to_single_tif(self, path: str):
+        date_range = self.__imd._dtrgen(self.start_date, self.end_date)
+        data = self.__imd._get_conc_array(date_range, self.download_path)
+        print(type(data))
+        print(data.shape)
+
     def __len__(self) -> int:
         return self.total_days - len(self.skipped_downloads)
+
+    @property
+    def grid_size(self) -> float:
+        return self.__imd._grid_size

@@ -1,0 +1,1 @@
+from imddaily.imddaily import get_data

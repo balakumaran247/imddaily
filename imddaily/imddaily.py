@@ -1,5 +1,5 @@
 from typing import List
-from core import IMD
+from .core import IMD
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 

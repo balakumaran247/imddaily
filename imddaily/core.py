@@ -98,6 +98,10 @@ class IMD:
         with open(file_path, 'rb') as f:
             return np.fromfile(f, 'float32')#.reshape(self.__lat_size, self.__lon_size)
 
+    def _reshape_array(self, time: int, arr: np.ndarray) -> np.ndarray:
+        arr = arr.reshape(time, self.__lon_size, self.__lat_size)
+        return np.swapaxes(arr, 1, 2)
+        
     def _get_array(self, date: datetime, down_path: str) -> np.ndarray:
         _, filepath = self.__get_filepath(date, down_path, 'grd')
         return self.__read_grd(filepath)

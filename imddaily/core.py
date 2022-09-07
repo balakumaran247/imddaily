@@ -50,7 +50,7 @@ class IMD:
 
     def _download_grd(self, date: datetime, path: str, pbar: Optional[tqdm] = None) -> Optional[str]:
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
-        filename, out_file = self.__get_filepath(date, path)
+        filename, out_file = self.__get_filepath(date, path, 'grd')
         if os.path.exists(out_file):
             if pbar: pbar.update(1)
             return filename
@@ -62,8 +62,8 @@ class IMD:
             f.write(r.content)
         return None
 
-    def __get_filepath(self, date: datetime, path: str) -> Tuple[str, str]:
-        filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.grd"
+    def __get_filepath(self, date: datetime, path: str, ext: str) -> Tuple[str, str]:
+        filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.{ext}"
         return (filename, os.path.join(path, filename))
 
     def _check_path(self, path: str) -> str:
@@ -99,7 +99,7 @@ class IMD:
             return np.fromfile(f, 'float32')#.reshape(self.__lat_size, self.__lon_size)
 
     def _get_array(self, date: datetime, down_path: str) -> np.ndarray:
-        _, filepath = self.__get_filepath(date, down_path)
+        _, filepath = self.__get_filepath(date, down_path, 'grd')
         return self.__read_grd(filepath)
 
     def _get_conc_array(self, date_range: Iterator[datetime], down_path: str) -> np.ndarray:

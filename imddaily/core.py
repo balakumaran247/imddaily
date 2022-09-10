@@ -84,10 +84,12 @@ class IMD:
         filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.{ext}"
         return (filename, os.path.join(path, filename))
 
-    def _check_path(self, path: str) -> str:
+    def _check_path(self, path: str, type: int = 0, err_raise: bool = True) -> Union[str, bool]:
         check_path = os.path.normpath(path)
-        if not os.path.isdir(check_path):
-            raise OSError(f"{check_path} does not exist.")
+        func = (os.path.isdir, os.path.isfile)[type]
+        if not func(check_path):
+            if err_raise: raise OSError(f"{check_path} does not exist.")
+            return False
         return check_path
 
     def _check_dates(self, start_date: str, end_date: str) -> Tuple[datetime, datetime]:

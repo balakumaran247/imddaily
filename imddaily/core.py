@@ -4,7 +4,9 @@ from datetime import datetime
 from datetime import timedelta as td
 from typing import Optional, Iterator, Tuple, Union
 import numpy as np
-import xarray as xr
+import rasterio
+from rasterio.crs import CRS
+from affine import Affine
 
 
 class IMD:
@@ -46,10 +48,23 @@ class IMD:
         self.param = param
         self.__imdurl = IMD.__IMDURL[self.param]
         self.__pfx, self.__dtfmt, self.__opfx = IMD.__IMDFMT[self.param]
-        self.__lat_size, self.__lon_size, self._grid_size, self.__undef, self.__units, self.__name = IMD.__ATTRS[self.param]
-        self.lat1, self.lat2, self.lon1, self.lon2 = IMD.__EXTENT[self.param]
-        self.lat_array = np.linspace(self.lat1, self.lat2, self.__lat_size)
-        self.lon_array = np.linspace(self.lon1, self.lon2, self.__lon_size)
+        self._lat_size, self._lon_size, self._px_size, self.__undef, self.__units, self.__name = IMD.__ATTRS[self.param]
+        self._lat1, self._lat2, self._lon1, self._lon2 = IMD.__EXTENT[self.param]
+        self.lat_array = np.linspace(self._lat1, self._lat2, self._lat_size)
+        self.lon_array = np.linspace(self._lon1, self._lon2, self._lon_size)
+        self.transform = Affine(self._px_size, 0.0, (self._lon1-(self._px_size/2)), 0.0, -self._px_size, (self._lat2+(self._px_size/2)))
+        self.profile = {
+            'driver': 'GTiff',
+            'dtype': 'float64',
+            'nodata': self.__undef,
+            'width': self._lon_size,
+            'height': self._lat_size,
+            'count': 1,
+            'crs': CRS.from_epsg(4326),
+            'transform': self.transform,
+            'tiled': False,
+            'interleave': 'band'
+        }
 
     def _download_grd(self, date: datetime, path: str, pbar: Optional[tqdm] = None) -> Optional[str]:
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
@@ -101,9 +116,9 @@ class IMD:
         with open(file_path, 'rb') as f:
             return np.fromfile(f, 'float32')#.reshape(self.__lat_size, self.__lon_size)
 
-    def _reshape_array(self, time: int, arr: np.ndarray) -> np.ndarray:
-        arr = arr.reshape(time, self.__lon_size, self.__lat_size)
-        return np.swapaxes(arr, 1, 2)
+    def _transform_array(self, arr: np.ndarray, flip_ax: int) -> np.ndarray:
+        arr = arr.reshape(self._lat_size, self._lon_size)
+        return np.flip(arr, flip_ax)
         
     def _get_array(self, date: datetime, down_path: str) -> np.ndarray:
         _, filepath = self.__get_filepath(date, down_path, 'grd')
@@ -115,36 +130,5 @@ class IMD:
             conc = np.append(conc, self._get_array(date, down_path))
         return np.array(conc)
 
-    def _get_xarray(self, time: Iterator[datetime], arr: np.ndarray):
-        xr_da = xr.Dataset({self.param: (['time', 'lat', 'lon'], arr,
-                                     {'units': self.__units, 'long_name': self.__name})},
-                           coords={'lat': self.lat_array,
-                                   'lon': self.lon_array, 'time': time})
-        xr_da_masked = xr_da.where(xr_da.values != self.__undef)
-        
-        xr_da_masked.time.encoding['units'] = 'days'
-        xr_da_masked.time.attrs['standard_name'] = 'time'
-        xr_da_masked.time.attrs['long_name'] = 'time'
-
-        xr_da_masked.lon.attrs['axis'] = 'X'
-        xr_da_masked.lon.attrs['long_name'] = 'longitude'
-        xr_da_masked.lon.attrs['long_name'] = 'longitude'
-        xr_da_masked.lon.attrs['units'] = 'degrees_east'
-
-        xr_da_masked.lat.attrs['axis'] = 'Y'
-        xr_da_masked.lat.attrs['standard_name'] = 'latitude'
-        xr_da_masked.lat.attrs['long_name'] = 'latitude'
-        xr_da_masked.lat.attrs['units'] = 'degrees_north'
-        
-        xr_da_masked.attrs['Conventions'] = 'CF-1.7'
-        xr_da_masked.attrs['title'] = 'IMD gridded data'
-        xr_da_masked.attrs['source'] = 'https://imdpune.gov.in/'
-        xr_da_masked.attrs['history'] = str(datetime.utcnow()) + ' Python'
-        xr_da_masked.attrs['references'] = ''
-        xr_da_masked.attrs['comment'] = ''
-        xr_da_masked.attrs['crs'] = 'epsg:4326'
-        
-        return xr_da_masked
-    
     def _dtrgen(self, start: datetime, end: datetime) -> Iterator[datetime]:
         return ((start+td(days=x)) for x in range((end-start).days+1))

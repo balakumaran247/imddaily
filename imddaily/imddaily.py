@@ -56,5 +56,5 @@ class get_data:
         return self.total_days - len(self.skipped_downloads)
 
     @property
-    def grid_size(self) -> float:
-        return self.__imd._grid_size
+    def px_size(self) -> float:
+        return self.__imd._px_size

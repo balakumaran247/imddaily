@@ -84,7 +84,7 @@ class IMD:
         filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.{ext}"
         return (filename, os.path.join(path, filename))
 
-    def _check_path(self, path: str, type: int = 0, err_raise: bool = True) -> str:
+    def _checked_path(self, path: str, type: int = 0, err_raise: bool = True) -> str:
         check_path = os.path.normpath(path)
         func = (os.path.isdir, os.path.isfile)[type]
         if not func(check_path):
@@ -122,8 +122,17 @@ class IMD:
         arr = arr.reshape(self._lat_size, self._lon_size)
         return np.flip(arr, flip_ax)
         
-    def _get_array(self, path: str, flip_ax: int) -> np.ndarray:
+    def _to_numpy(self, path: str, flip_ax: int) -> np.ndarray:
         return self._transform_array(self.__read_grd(path), flip_ax)
+
+    def _get_array(self, date: datetime, grd_dir: str, tif_dir: str) -> Tuple[str, np.ndarray]:
+        _, filepath = self._get_filepath(date, grd_dir, 'grd')
+        if self._checked_path(filepath, 1, err_raise=False):
+            data = self._to_numpy(filepath, 0)
+        else:
+            data = np.full((self._lat_size, self._lon_size), self.__undef)
+        _, out_file = self._get_filepath(date, tif_dir, 'tif')
+        return (out_file, data)
 
     # def _get_conc_array(self, date_range: Iterator[datetime], down_path: str) -> np.ndarray:
     #     conc = np.array([])

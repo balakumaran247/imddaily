@@ -52,8 +52,8 @@ class IMD:
         self._lat1, self._lat2, self._lon1, self._lon2 = IMD.__EXTENT[self.param]
         self.lat_array = np.linspace(self._lat1, self._lat2, self._lat_size)
         self.lon_array = np.linspace(self._lon1, self._lon2, self._lon_size)
-        self.transform = Affine(self._px_size, 0.0, (self._lon1-(self._px_size/2)), 0.0, -self._px_size, (self._lat2+(self._px_size/2)))
-        self.profile = {
+        self.__transform = Affine(self._px_size, 0.0, (self._lon1-(self._px_size/2)), 0.0, -self._px_size, (self._lat2+(self._px_size/2)))
+        self._profile = {
             'driver': 'GTiff',
             'dtype': 'float64',
             'nodata': self.__undef,
@@ -61,14 +61,14 @@ class IMD:
             'height': self._lat_size,
             'count': 1,
             'crs': CRS.from_epsg(4326),
-            'transform': self.transform,
+            'transform': self.__transform,
             'tiled': False,
             'interleave': 'band'
         }
 
     def _download_grd(self, date: datetime, path: str, pbar: Optional[tqdm] = None) -> Optional[str]:
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
-        filename, out_file = self.__get_filepath(date, path, 'grd')
+        filename, out_file = self._get_filepath(date, path, 'grd')
         if os.path.exists(out_file):
             if pbar: pbar.update(1)
             return filename
@@ -80,16 +80,16 @@ class IMD:
             f.write(r.content)
         return None
 
-    def __get_filepath(self, date: datetime, path: str, ext: str) -> Tuple[str, str]:
+    def _get_filepath(self, date: datetime, path: str, ext: str) -> Tuple[str, str]:
         filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.{ext}"
         return (filename, os.path.join(path, filename))
 
-    def _check_path(self, path: str, type: int = 0, err_raise: bool = True) -> Union[str, bool]:
+    def _check_path(self, path: str, type: int = 0, err_raise: bool = True) -> str:
         check_path = os.path.normpath(path)
         func = (os.path.isdir, os.path.isfile)[type]
         if not func(check_path):
             if err_raise: raise OSError(f"{check_path} does not exist.")
-            return False
+            return str()
         return check_path
 
     def _check_dates(self, start_date: str, end_date: str) -> Tuple[datetime, datetime]:
@@ -122,15 +122,14 @@ class IMD:
         arr = arr.reshape(self._lat_size, self._lon_size)
         return np.flip(arr, flip_ax)
         
-    def _get_array(self, date: datetime, down_path: str) -> np.ndarray:
-        _, filepath = self.__get_filepath(date, down_path, 'grd')
-        return self.__read_grd(filepath)
+    def _get_array(self, path: str, flip_ax: int) -> np.ndarray:
+        return self._transform_array(self.__read_grd(path), flip_ax)
 
-    def _get_conc_array(self, date_range: Iterator[datetime], down_path: str) -> np.ndarray:
-        conc = np.array([])
-        for date in date_range:
-            conc = np.append(conc, self._get_array(date, down_path))
-        return np.array(conc)
+    # def _get_conc_array(self, date_range: Iterator[datetime], down_path: str) -> np.ndarray:
+    #     conc = np.array([])
+    #     for date in date_range:
+    #         conc = np.append(conc, self._get_array(date, down_path))
+        # return np.array(conc)
 
     def _dtrgen(self, start: datetime, end: datetime) -> Iterator[datetime]:
         return ((start+td(days=x)) for x in range((end-start).days+1))

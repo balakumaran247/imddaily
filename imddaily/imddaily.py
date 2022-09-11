@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import List
 from .core import IMD
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+import rasterio
 
 
 class get_data:
@@ -42,15 +44,18 @@ class get_data:
     def to_tif(self, path: str):
         date_range = self.__imd._dtrgen(self.start_date, self.end_date)
         for date in date_range:
-            data = self.__imd._get_array(date, self.download_path)
-            print(type(data))
-            print(data.shape)
+            _, filepath = self.__imd._get_filepath(date, self.download_path, 'grd')
+            if self.__imd._check_path(filepath, 1, err_raise=False):
+                data = self.__imd._get_array(filepath, 0)
+                _, out_file = self.__imd._get_filepath(date, path, 'tif')
+                with rasterio.open(out_file, 'w', **self.__imd._profile) as dst:
+                    dst.write(data, 1)
 
-    def to_single_tif(self, path: str):
-        date_range = self.__imd._dtrgen(self.start_date, self.end_date)
-        data = self.__imd._get_conc_array(date_range, self.download_path)
-        print(type(data))
-        print(data.shape)
+    # def to_single_tif(self, path: str):
+    #     date_range = self.__imd._dtrgen(self.start_date, self.end_date)
+    #     data = self.__imd._get_conc_array(date_range, self.download_path)
+    #     print(type(data))
+    #     print(data.shape)
 
     def __len__(self) -> int:
         return self.total_days - len(self.skipped_downloads)

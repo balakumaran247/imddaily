@@ -1,1 +1,1 @@
-from imddaily.imddaily import get_data
+from .imddaily import __version__

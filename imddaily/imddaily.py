@@ -1,10 +1,10 @@
-from datetime import datetime
 from typing import List
 from .core import IMD
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import rasterio
 
+__version__ = "0.2.0"
 
 class get_data:
     __IMDPARAMS = ('raingpm','tmax','tmin','rain','tmaxone','tminone')
@@ -20,7 +20,7 @@ class get_data:
         self.total_days = (self.end_date-self.start_date).days+1
         self.skipped_downloads = self.__download()
 
-    def __download(self) -> List:
+    def __download(self) -> List[str]:
         date_range = self.__imd._dtrgen(self.start_date, self.end_date)
         output = []
         if self.quiet:

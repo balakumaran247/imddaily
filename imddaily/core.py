@@ -1,8 +1,7 @@
 import requests, os
-from tqdm import tqdm
 from datetime import datetime
 from datetime import timedelta as td
-from typing import Optional, Iterator, Tuple, Union
+from typing import Optional, Iterator, Tuple
 import numpy as np
 from rasterio.crs import CRS
 from affine import Affine

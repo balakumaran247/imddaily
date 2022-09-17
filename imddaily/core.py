@@ -4,7 +4,6 @@ from datetime import datetime
 from datetime import timedelta as td
 from typing import Optional, Iterator, Tuple, Union
 import numpy as np
-import rasterio
 from rasterio.crs import CRS
 from affine import Affine
 
@@ -50,8 +49,8 @@ class IMD:
         self.__pfx, self.__dtfmt, self.__opfx = IMD.__IMDFMT[self.param]
         self._lat_size, self._lon_size, self._px_size, self.__undef, self.__units, self.__name = IMD.__ATTRS[self.param]
         self._lat1, self._lat2, self._lon1, self._lon2 = IMD.__EXTENT[self.param]
-        self.lat_array = np.linspace(self._lat1, self._lat2, self._lat_size)
-        self.lon_array = np.linspace(self._lon1, self._lon2, self._lon_size)
+        self._lat_array = np.linspace(self._lat1, self._lat2, self._lat_size)
+        self._lon_array = np.linspace(self._lon1, self._lon2, self._lon_size)
         self.__transform = Affine(self._px_size, 0.0, (self._lon1-(self._px_size/2)), 0.0, -self._px_size, (self._lat2+(self._px_size/2)))
         self._profile = {
             'driver': 'GTiff',
@@ -66,15 +65,17 @@ class IMD:
             'interleave': 'band'
         }
 
-    def _download_grd(self, date: datetime, path: str, pbar: Optional[tqdm] = None) -> Optional[str]:
+    def fetch_grd(self, url: str) -> Tuple[bool, requests.Response]:
+        r = requests.get(url, allow_redirects=True)
+        return (r.status_code==200, r)
+
+    def _download_grd(self, date: datetime, path: str) -> Optional[str]:
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
         filename, out_file = self._get_filepath(date, path, 'grd')
         if os.path.exists(out_file):
-            if pbar: pbar.update(1)
-            return filename
-        r = requests.get(url, allow_redirects=True)
-        if pbar: pbar.update(1)
-        if r.status_code != 200:
+            return None
+        status, r = self.fetch_grd(url)
+        if not status:
             return filename
         with open(out_file, "wb") as f:
             f.write(r.content)

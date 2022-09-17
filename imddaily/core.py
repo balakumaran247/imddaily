@@ -117,7 +117,7 @@ class IMD:
 
     def __read_grd(self, file_path: str) -> np.ndarray:
         with open(file_path, 'rb') as f:
-            return np.fromfile(f, 'float32')#.reshape(self.__lat_size, self.__lon_size)
+            return np.fromfile(f, 'float32')
 
     def _transform_array(self, arr: np.ndarray, flip_ax: int) -> np.ndarray:
         arr = arr.reshape(self._lat_size, self._lon_size)
@@ -126,20 +126,14 @@ class IMD:
     def _to_numpy(self, path: str, flip_ax: int) -> np.ndarray:
         return self._transform_array(self.__read_grd(path), flip_ax)
 
-    def _get_array(self, date: datetime, grd_dir: str, tif_dir: str) -> Tuple[str, np.ndarray]:
+    def _get_array(self, date: datetime, grd_dir: str, tif_dir: str) -> Tuple[datetime, str, np.ndarray]:
         _, filepath = self._get_filepath(date, grd_dir, 'grd')
         if self._checked_path(filepath, 1, err_raise=False):
             data = self._to_numpy(filepath, 0)
         else:
             data = np.full((self._lat_size, self._lon_size), self.__undef)
         _, out_file = self._get_filepath(date, tif_dir, 'tif')
-        return (out_file, data)
-
-    # def _get_conc_array(self, date_range: Iterator[datetime], down_path: str) -> np.ndarray:
-    #     conc = np.array([])
-    #     for date in date_range:
-    #         conc = np.append(conc, self._get_array(date, down_path))
-        # return np.array(conc)
+        return (date, out_file, data)
 
     def _dtrgen(self, start: datetime, end: datetime) -> Iterator[datetime]:
         return ((start+td(days=x)) for x in range((end-start).days+1))

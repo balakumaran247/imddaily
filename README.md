@@ -22,8 +22,8 @@ dependencies include rasterio, numpy, affine, tqdm, requests.
 imddaily package can download and convert the IMD data
 ```
 from imddaily import imddaily
-data = imddaily.get_data('rain', '2020-01-01', '2020-12-31', './rain/grd/')
-data.to_geotiff('./rain/tif/')
+data = imddaily.get_data('rain', '2020-01-01', '2020-12-31', '/Users/home/rain/grd/')
+data.to_geotiff('/Users/home/rain/tif/')
 ```
 
 # License

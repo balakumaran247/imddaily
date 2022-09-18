@@ -1,0 +1,42 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=60.9.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "imddaily"
+dynamic = ["version"]
+description = "Download and Convert IMD Daily Data"
+readme = "README.md"
+authors = [{ name = "Balakumaran", email = "balakumaran247@gmail.com" }]
+license = { file = "LICENSE.txt" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = [
+    "IMD", "India Meteorological Department", "imdpune", "Rainfall", 
+    "Temperature", "Precipitation"
+]
+dependencies = [
+    "tqdm",
+    "requests",
+    "affine",
+    "numpy",
+    "rasterio",
+]
+requires-python = ">=3.7"
+
+[tool.setuptools]
+packages = ["imddaily"]
+
+[tool.setuptools.dynamic]
+version = {attr = "imddaily.imddaily.__version__"}
+
+[project.optional-dependencies]
+dev = ["black", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/balakumaran247/imddaily"

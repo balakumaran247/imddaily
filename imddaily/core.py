@@ -117,7 +117,7 @@ class IMD:
             path (str): file path where downloaded data will be stored in .grd
 
         Returns:
-            Optional[str]: filename if download failed or None if succeed
+            Optional[str]: date if download failed or None if succeed
         """
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
         filename, out_file = self._get_filepath(date, path, "grd")
@@ -125,7 +125,7 @@ class IMD:
             return None
         status, r = self.fetch_grd(url)
         if not status:
-            return filename
+            return date.strftime("%Y-%m-%d")
         with open(out_file, "wb") as f:
             f.write(r.content)
         return None

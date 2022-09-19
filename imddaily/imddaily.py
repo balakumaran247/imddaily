@@ -7,7 +7,7 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import rasterio
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 class get_data:
@@ -96,17 +96,19 @@ class get_data:
                 futures = [
                     ex.submit(self.__imd._get_array, date, self.download_path, path)
                     for date in date_range
+                    if date.strftime("%Y-%m-%d") not in self.skipped_downloads
                 ]
                 for f in as_completed(futures):
                     _, out_file, data = f.result()
                     with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
                         dst.write(data, 1)
         else:
-            with tqdm(total=self.total_days) as pbar:
+            with tqdm(total=(self.total_days-len(self.skipped_downloads))) as pbar:
                 with ProcessPoolExecutor() as ex:
                     futures = [
                         ex.submit(self.__imd._get_array, date, self.download_path, path)
                         for date in date_range
+                        if date.strftime("%Y-%m-%d") not in self.skipped_downloads
                     ]
                     for f in as_completed(futures):
                         _, out_file, data = f.result()

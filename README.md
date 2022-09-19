@@ -16,7 +16,6 @@ imddaily can be installed through pip,
 pip install imddaily
 ```
 dependencies include rasterio, numpy, affine, tqdm, requests.
-**pre-install rasterio for Windows**
 
 # Usage
 imddaily package can download and convert the IMD data

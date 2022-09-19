@@ -25,6 +25,7 @@ dependencies = [
     "requests",
     "affine",
     "numpy",
+    "gdal",
     "rasterio",
 ]
 requires-python = ">=3.7"

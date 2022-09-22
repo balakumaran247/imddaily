@@ -3,6 +3,7 @@ import os, pytest
 from datetime import datetime
 from datetime import timedelta as td
 
+
 @pytest.mark.parametrize(
     "param", ["raingpm", "tmax", "tmin", "rain", "tmaxone", "tminone"]
 )
@@ -26,5 +27,14 @@ def test_download_files_exist(param):
         )
         for dt in dt_range
     ]
-
     assert all(test_files_exits)
+    assert data.total_days == 10
+    assert data.skipped_downloads == []
+
+
+def test_download_skipped():
+    testpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data")
+    data = imddaily.get_data("rain", "2020-06-21", "2020-06-30", testpath)
+    assert not os.path.isfile(os.path.join(testpath, "rain_20200624.grd"))
+    assert len(data.skipped_downloads) == 1
+    assert "2020-06-24" in data.skipped_downloads

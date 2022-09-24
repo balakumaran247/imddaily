@@ -46,11 +46,11 @@ class IMD:
     }
     __ATTRS = {
         "raingpm": (281, 241, 0.25, -999.0, "mm", "Rainfall(GPM)"),
-        "tmax": (61, 61, 0.5, 99.9, "degree", "Max Temperature"),
-        "tmin": (61, 61, 0.5, 99.9, "degree", "Min Temperature"),
+        "tmax": (61, 61, 0.5, 99.9, "degree C", "Max Temperature"),
+        "tmin": (61, 61, 0.5, 99.9, "degree C", "Min Temperature"),
         "rain": (129, 135, 0.25, -999.0, "mm", "Rainfall"),
-        "tmaxone": (31, 31, 1.0, 99.9, "degree", "Max Temperature"),
-        "tminone": (31, 31, 1.0, 99.9, "degree", "Min Temperature"),
+        "tmaxone": (31, 31, 1.0, 99.9, "degree C", "Max Temperature"),
+        "tminone": (31, 31, 1.0, 99.9, "degree C", "Min Temperature"),
     }
     __EXTENT = {
         "raingpm": (-30.0, 40.0, 50.0, 110.0),

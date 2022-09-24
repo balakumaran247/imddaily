@@ -196,7 +196,7 @@ class IMD:
         sdate = datetime.strptime(start_date, "%Y-%m-%d")
         edate = datetime.strptime(end_date, "%Y-%m-%d")
         if sdate > edate:
-            start_date, end_date = end_date, start_date
+            sdate, edate = edate, sdate
         if self.__first_date > sdate:
             raise ValueError(
                 f'Data available after {self.__first_date.strftime("%Y-%m-%d")}'

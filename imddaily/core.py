@@ -120,7 +120,7 @@ class IMD:
             Optional[str]: date if download failed or None if succeed
         """
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
-        filename, out_file = self._get_filepath(date, path, "grd")
+        _, out_file = self._get_filepath(date, path, "grd")
         if os.path.exists(out_file):
             return None
         status, r = self.fetch_grd(url)
@@ -130,7 +130,7 @@ class IMD:
             f.write(r.content)
         return None
 
-    def _get_filepath(self, date: datetime, path: str, ext: str) -> Tuple[str, str]:
+    def _get_filepath(self, date: datetime, path: str, ext: str, xdate: Optional[datetime] = None) -> Tuple[str, str]:
         """generate file path for provided date and format in the provided
         directory path
 
@@ -138,11 +138,13 @@ class IMD:
             date (datetime): date for which the file path to be created
             path (str): directory path
             ext (str): file extension
+            xdate (Optional[datetime]): second date if needed in filename, defaults to None.
 
         Returns:
             Tuple[str, str]: file name and the file path
         """
-        filename = f"{self.__opfx}{date.strftime('%Y%m%d')}.{ext}"
+        extra = f'_{xdate:%Y%m%d}' if xdate else ''
+        filename = f"{self.__opfx}{date:%Y%m%d}{extra}.{ext}"
         return (filename, os.path.join(path, filename))
 
     def _checked_path(self, path: str, type: int = 0, err_raise: bool = True) -> str:

@@ -50,6 +50,8 @@ class get_data:
         self.quiet = quiet
         self.total_days = (self.end_date - self.start_date).days + 1
         self.skipped_downloads = self.__download()
+        if self.total_days == len(self.skipped_downloads):
+            raise IOError(f'{self.param} data unavailable or inaccessible')
 
     def __download(self) -> List[str]:
         """When get_data initiated download of data from start date to end date

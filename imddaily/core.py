@@ -29,13 +29,13 @@ class IMD:
     """
 
     __IMDURL = {
-        "raingpm": "https://www.imdpune.gov.in/Seasons/Temperature/gpm/",
-        "tmax": "https://www.imdpune.gov.in/Seasons/Temperature/max/",
-        "tmin": "https://www.imdpune.gov.in/Seasons/Temperature/min/",
-        "rain": "https://www.imdpune.gov.in/Seasons/Temperature/Rainfall/",
-        "tmaxone": "https://www.imdpune.gov.in/Seasons/Temperature/max/",
-        "tminone": "https://www.imdpune.gov.in/Seasons/Temperature/min/",
-    }  # https://www.imdpune.gov.in/Seasons/Temperature/temp.html
+        "raingpm": "https://www.imdpune.gov.in/cmpg/Realtimedata/gpm/",
+        "tmax": "https://www.imdpune.gov.in/cmpg/Realtimedata/max/",
+        "tmin": "https://www.imdpune.gov.in/cmpg/Realtimedata/min/",
+        "rain": "https://www.imdpune.gov.in/cmpg/Realtimedata/Rainfall/",
+        "tmaxone": "https://www.imdpune.gov.in/cmpg/Realtimedata/maxone/",
+        "tminone": "https://www.imdpune.gov.in/cmpg/Realtimedata/minone/",
+    }  # https://www.imdpune.gov.in/lrfindex.php
     __IMDFMT = {
         "raingpm": ("", "%d%m%Y", "raingpm_"),
         "tmax": ("max", "%d%m%Y", "tmax_"),

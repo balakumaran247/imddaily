@@ -217,17 +217,21 @@ class IMD:
         with open(file_path, "rb") as f:
             return np.fromfile(f, "float32")
 
-    def _transform_array(self, arr: np.ndarray, flip_ax: int) -> np.ndarray:
+    def _transform_array(self, arr: np.ndarray, flip_ax: int, num_bands: Optional[int] = None) -> np.ndarray:
         """reshape and flip the numpy ndarray
 
         Args:
             arr (np.ndarray): grd data read as numpy ndarray
             flip_ax (int): axis along which to flip the array
+            num_bands (Optional[int]): number of bands in a single tif file
 
         Returns:
             np.ndarray: transformed array
         """
-        arr = arr.reshape(self._lat_size, self._lon_size)
+        if num_bands:
+            arr = arr.reshape(num_bands, self._lat_size, self._lon_size)
+        else:
+            arr = arr.reshape(self._lat_size, self._lon_size)
         return np.flip(arr, flip_ax)
 
     def _to_numpy(self, path: str, flip_ax: int) -> np.ndarray:

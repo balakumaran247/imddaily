@@ -6,6 +6,7 @@ from .core import IMD
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import rasterio
+import numpy as np
 
 __version__ = "0.3.0"
 
@@ -94,7 +95,6 @@ class get_data:
             single (bool): save as single tif file with daily data as bands
         """
         date_range = self.__imd._dtrgen(self.start_date, self.end_date)
-        if single: self.__imd._profile.update(count=self.total_days)
         if self.quiet:
             with ProcessPoolExecutor() as ex:
                 futures = [
@@ -102,15 +102,31 @@ class get_data:
                     for date in date_range
                     if date.strftime("%Y-%m-%d") not in (self.skipped_downloads,[])[single]
                 ]
-                for f in as_completed(futures):
-                    odate, out_file, data = f.result()
-                    if single:
-                        band = (odate - self.start_date).days + 1
-                        out_file = self.__imd._get_filepath(self.start_date,path,'tif',self.end_date)
-                    else:
-                        band = 1
+                if single:
+                    _, out_file = self.__imd._get_filepath(self.start_date,path,'tif',self.end_date)
+                    self.__imd._profile.update(count=self.total_days)
+                    single_arr = np.array([])
+                    for f in futures:
+                        _, _, data = f.result()
+                        single_arr = np.append(single_arr, data)
+                    single_arr = self.__imd._transform_array(single_arr, 0, self.total_days)
                     with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
-                        dst.write(data, band)
+                        dst.write(single_arr)
+                else:
+                    self.__imd._profile.update(count=1)
+                    for f in as_completed(futures):
+                        _, out_file, data = f.result()
+                        with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
+                            dst.write(data, 1)
+                # for f in as_completed(futures):
+                #     odate, out_file, data = f.result()
+                #     if single:
+                #         band = (odate - self.start_date).days + 1
+                #         _, out_file = self.__imd._get_filepath(self.start_date,path,'tif',self.end_date)
+                #     else:
+                #         band = 1
+                #     with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
+                #         dst.write(data, band)
         else:
             with tqdm(total=(self.total_days-len(self.skipped_downloads))) as pbar:
                 with ProcessPoolExecutor() as ex:
@@ -119,16 +135,34 @@ class get_data:
                         for date in date_range
                         if date.strftime("%Y-%m-%d") not in (self.skipped_downloads,[])[single]
                     ]
-                    for f in as_completed(futures):
-                        odate, out_file, data = f.result()
-                        if single:
-                            band = (odate - self.start_date).days + 1
-                            out_file = self.__imd._get_filepath(self.start_date,path,'tif',self.end_date)
-                        else:
-                            band = 1
+                    if single:
+                        _, out_file = self.__imd._get_filepath(self.start_date,path,'tif',self.end_date)
+                        self.__imd._profile.update(count=self.total_days)
+                        single_arr = np.array([])
+                        for f in futures:
+                            _, _, data = f.result()
+                            single_arr = np.append(single_arr, data)
+                        single_arr = self.__imd._transform_array(single_arr, 0, self.total_days)
                         with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
-                            dst.write(data, band)
-                        pbar.update(1)
+                            dst.write(single_arr)
+                        pbar.update(self.total_days-len(self.skipped_downloads))
+                    else:
+                        self.__imd._profile.update(count=1)
+                        for f in as_completed(futures):
+                            _, out_file, data = f.result()
+                            with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
+                                dst.write(data, 1)
+                            pbar.update(1)
+                    # for f in as_completed(futures):
+                    #     odate, out_file, data = f.result()
+                    #     if single:
+                    #         band = (odate - self.start_date).days + 1
+                    #         _, out_file = self.__imd._get_filepath(self.start_date,path,'tif',self.end_date)
+                    #     else:
+                    #         band = 1
+                    #     with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
+                    #         dst.write(data, band)
+                    #     pbar.update(1)
 
     def __len__(self) -> int:
         return self.total_days - len(self.skipped_downloads)

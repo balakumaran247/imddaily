@@ -4,13 +4,7 @@ import os, pytest
 from datetime import datetime
 from datetime import timedelta as td
 
-
-@pytest.mark.parametrize(
-    "param", ["raingpm", "tmax", "tmin", "rain", "tmaxone", "tminone"]
-)
-def test_conversion_files_exist(param):
-    testpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data")
-    prefix = {
+prefix = {
         "raingpm": "raingpm_",
         "tmax": "tmax_",
         "tmin": "tmin_",
@@ -18,6 +12,21 @@ def test_conversion_files_exist(param):
         "tmaxone": "tmax1_",
         "tminone": "tmin1_",
     }
+
+shape_dict = {
+        "raingpm": (281, 241),
+        "tmax": (61, 61),
+        "tmin": (61, 61),
+        "rain": (129, 135),
+        "tmaxone": (31, 31),
+        "tminone": (31, 31),
+    }
+
+@pytest.mark.parametrize(
+    "param", ["raingpm", "tmax", "tmin", "rain", "tmaxone", "tminone"]
+)
+def test_conversion_files_exist(param):
+    testpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data")
     data = imddaily.get_data(param, "2020-06-01", "2020-06-10", testpath)
     data.to_geotiff(testpath)
     start = datetime.strptime("2020-06-01", "%Y-%m-%d")
@@ -43,23 +52,7 @@ def test_conversion_skipped():
     "param", ["raingpm", "tmax", "tmin", "rain", "tmaxone", "tminone"]
 )
 def test_conversion_shape(param):
-    shape_dict = {
-        "raingpm": (281, 241),
-        "tmax": (61, 61),
-        "tmin": (61, 61),
-        "rain": (129, 135),
-        "tmaxone": (31, 31),
-        "tminone": (31, 31),
-    }
     testpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data")
-    prefix = {
-        "raingpm": "raingpm_",
-        "tmax": "tmax_",
-        "tmin": "tmin_",
-        "rain": "rain_",
-        "tmaxone": "tmax1_",
-        "tminone": "tmin1_",
-    }
     data = imddaily.get_data(param, "2020-06-01", "2020-06-10", testpath)
     data.to_geotiff(testpath)
     start = datetime.strptime("2020-06-01", "%Y-%m-%d")
@@ -70,3 +63,16 @@ def test_conversion_shape(param):
             os.path.join(testpath, f"{prefix[param]}{dt.strftime('%Y%m%d')}.tif"), "r"
         ) as f:
             assert f.shape == shape_dict[param]
+
+@pytest.mark.parametrize(
+    "param", ["raingpm", "tmax", "tmin", "rain", "tmaxone", "tminone"]
+)
+def test_conversion_single(param):
+    testpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data")
+    data = imddaily.get_data(param, "2020-06-01", "2020-06-10", testpath)
+    data.to_geotiff(testpath, True)
+    out_path = os.path.join(testpath, f"{prefix[param]}20200701_20200710.tif")
+    assert os.path.isfile(out_path)
+    with rasterio.open(out_path, 'r') as f:
+        assert f.shape == shape_dict[param]
+        assert f.count == 10

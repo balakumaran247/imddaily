@@ -111,7 +111,7 @@ class get_data:
                         single_arr = np.append(single_arr, data)
                     single_arr = self.__imd._transform_array(single_arr, 0, self.total_days)
                     with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
-                        dst.write(single_arr)
+                        dst.write(single_arr[::-1])
                 else:
                     self.__imd._profile.update(count=1)
                     for f in as_completed(futures):
@@ -144,7 +144,7 @@ class get_data:
                             single_arr = np.append(single_arr, data)
                         single_arr = self.__imd._transform_array(single_arr, 0, self.total_days)
                         with rasterio.open(out_file, "w", **self.__imd._profile) as dst:
-                            dst.write(single_arr)
+                            dst.write(single_arr[::-1])
                         pbar.update(self.total_days-len(self.skipped_downloads))
                     else:
                         self.__imd._profile.update(count=1)

@@ -71,8 +71,18 @@ def test_conversion_single(param):
     testpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data")
     data = imddaily.get_data(param, "2020-06-01", "2020-06-10", testpath)
     data.to_geotiff(testpath, True)
-    out_path = os.path.join(testpath, f"{prefix[param]}20200701_20200710.tif")
+    out_path = os.path.join(testpath, f"{prefix[param]}20200601_20200610.tif")
     assert os.path.isfile(out_path)
     with rasterio.open(out_path, 'r') as f:
         assert f.shape == shape_dict[param]
         assert f.count == 10
+    data.to_geotiff(testpath)
+    start = datetime.strptime("2020-06-01", "%Y-%m-%d")
+    end = datetime.strptime("2020-06-10", "%Y-%m-%d")
+    dt_range = (start + td(days=x) for x in range((end - start).days + 1))
+    for idx, dt in enumerate(dt_range):
+        with rasterio.open(os.path.join(testpath, f"{prefix[param]}{dt.strftime('%Y%m%d')}.tif"), "r") as ind:
+            ind_arr = ind.read(1)
+        with rasterio.open(out_path,'r') as sf:
+            sf_arr = sf.read(idx+1)
+        assert (ind_arr==sf_arr).all()

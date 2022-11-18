@@ -123,8 +123,6 @@ class IMD:
         """
         url = f"{self.__imdurl}{self.__pfx}{date.strftime(self.__dtfmt)}.grd"
         _, out_file = self._get_filepath(date, path, "grd")
-        if os.path.exists(out_file):
-            return None
         status, r = self.fetch_grd(url)
         if not status:
             return date.strftime("%Y-%m-%d")

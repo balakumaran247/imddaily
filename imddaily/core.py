@@ -11,8 +11,10 @@ from datetime import datetime
 from datetime import timedelta as td
 from typing import Optional, Iterator, Tuple
 import numpy as np
+import rasterio
 from rasterio.crs import CRS
 from affine import Affine
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 
 
 class IMD:
@@ -279,3 +281,42 @@ class IMD:
             Iterator[datetime]: generator object of datetime ranging from start date to end date
         """
         return ((start + td(days=x)) for x in range((end - start).days + 1))
+    
+    def __get_futures(self, **kwargs):
+        with ProcessPoolExecutor() as ex:
+            return [
+                ex.submit(self._get_array, date, kwargs['download_path'], kwargs['out_path'])
+                for date in kwargs['date_range']
+                if f'{date:%Y-%m-%d}' not in kwargs['x_list']
+            ]
+
+    def _to_geotiff_conversion(self, **kwargs):
+        # total_days, single, pbar, download_path, out_path, date_range, x_list
+        # start_date, end_date, skipped_downloads
+        if kwargs['single']:
+            kwargs.update(x_list=list())
+            self.__single_tif_conv(**kwargs)
+        else:
+            self.__tif_conv(**kwargs)
+
+    def __single_tif_conv(self, **kwargs):
+        futures = self.__get_futures(**kwargs)
+        _, out_file = self._get_filepath(kwargs['start_date'],kwargs['out_path'],'tif',kwargs['end_date'])
+        self._profile.update(count=kwargs['total_days'])
+        single_arr = np.array([])
+        for f in futures:
+            _, _, data = f.result()
+            single_arr = np.append(single_arr, data)
+        single_arr = self._transform_array(single_arr, 0, kwargs['total_days'])
+        with rasterio.open(out_file, "w", **self._profile) as dst:
+            dst.write(single_arr[::-1])
+        if kwargs['pbar']: kwargs['pbar'].update(kwargs['total_days']-len(kwargs['skipped_downloads']))
+
+    def __tif_conv(self, **kwargs):
+        futures = self.__get_futures(**kwargs)
+        self._profile.update(count=1)
+        for f in as_completed(futures):
+            _, out_file, data = f.result()
+            with rasterio.open(out_file, "w", **self._profile) as dst:
+                dst.write(data, 1)
+            if kwargs['pbar']: kwargs['pbar'].update(1)

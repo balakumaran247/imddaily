@@ -63,28 +63,23 @@ class get_data:
         """
         date_range = self.__imd._dtrgen(self.start_date, self.end_date)
         output = []
+        with ThreadPoolExecutor() as ex:
+            futures = [
+                ex.submit(self.__imd._download_grd, dt, self.download_path)
+                for dt in date_range
+            ]
         if self.quiet:
-            with ThreadPoolExecutor() as ex:
-                futures = [
-                    ex.submit(self.__imd._download_grd, dt, self.download_path)
-                    for dt in date_range
-                ]
+            for f in as_completed(futures):
+                value = f.result()
+                if value is not None:
+                    output.append(value)
+        else:
+            with tqdm(total=self.total_days) as pbar:
                 for f in as_completed(futures):
                     value = f.result()
                     if value is not None:
                         output.append(value)
-        else:
-            with tqdm(total=self.total_days) as pbar:
-                with ThreadPoolExecutor() as ex:
-                    futures = [
-                        ex.submit(self.__imd._download_grd, dt, self.download_path)
-                        for dt in date_range
-                    ]
-                    for f in as_completed(futures):
-                        value = f.result()
-                        if value is not None:
-                            output.append(value)
-                        pbar.update(1)
+                    pbar.update(1)
         return output
 
     def to_geotiff(self, path: str, single: bool = False) -> None:

@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.0 (22/11/2022)
+
+### Fix
+
+- Fixed imdpune urls
+
+### Feature
+
+- Added single argument to to_geotiff method for conversion of .grd files to single .tif file with daily data as bands
+
+### Tests
+
+- Added tests for input dates
+- Added tests for conversion of .grd to .tif
+
 ## v0.2.1 (19/09/2022)
 
 ### Fix
